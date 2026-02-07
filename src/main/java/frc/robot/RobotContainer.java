@@ -1,75 +1,101 @@
 package frc.robot;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+
 import frc.robot.Constants.OperatorConstants;
-//import frc.robot.commands.Autos;
-import frc.robot.subsystems.swerve_subsystem; // Asegúrate de que coincida con tu archivo
+
+import frc.robot.commands.intake_shooter_command;
+import frc.robot.commands.shoot;
+import frc.robot.commands.entry;
+
+import frc.robot.commands.selector_command;
+
+import frc.robot.subsystems.intake_shooter;
+import frc.robot.subsystems.selector;
+import frc.robot.subsystems.swerve_subsystem;
+
 import swervelib.SwerveInputStream;
 
 public class RobotContainer {
 
-  // Instanciamos el Subistema (Con mayúscula al inicio)
+  /* ================= SUBSYSTEMS ================= */
   private final swerve_subsystem drivebase = new swerve_subsystem();
+  private final intake_shooter m_IntakeShooter = new intake_shooter();
+  private final selector m_Selector = new selector();
 
-  // Controladores (Driver y Operador)
-  // Puerto 0 suele ser el Driver
-  private final CommandXboxController m_driverController_chasis = new CommandXboxController(0); 
+  /* ================= CONTROLLERS ================= */
+  private final CommandXboxController m_driverController_chasis =
+      new CommandXboxController(0);
 
+  private final CommandXboxController m_driverController_mecanismos =
+      new CommandXboxController(1);
 
+  /* ================= DRIVE CONFIG ================= */
   private boolean fieldRelative = false;
 
-// how it moves
-SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-                  () -> m_driverController_chasis.getLeftY() * -1,
-                  () -> m_driverController_chasis.getLeftX() * -1)
-                  .withControllerRotationAxis(m_driverController_chasis:: getRightX)
-                  .deadband(OperatorConstants.DEADBAND)
-                  .scaleTranslation(0.8)
-                  .allianceRelativeControl(false);
+  SwerveInputStream driveAngularVelocity =
+      SwerveInputStream.of(
+              drivebase.getSwerveDrive(),
+              () -> -m_driverController_chasis.getLeftY(),
+              () -> -m_driverController_chasis.getLeftX())
+          .withControllerRotationAxis(m_driverController_chasis::getRightX)
+          .deadband(OperatorConstants.DEADBAND)
+          .scaleTranslation(0.8)
+          .allianceRelativeControl(false);
 
-//how it turns
-SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
-                  .withControllerHeadingAxis(m_driverController_chasis::getRightX, m_driverController_chasis::getRightY)
-                  .headingWhile(() -> fieldRelative);
+  SwerveInputStream driveDirectAngle =
+      driveAngularVelocity.copy()
+          .withControllerHeadingAxis(
+              m_driverController_chasis::getRightX,
+              m_driverController_chasis::getRightY)
+          .headingWhile(() -> fieldRelative);
 
+  Command driveFieldOrientedAngularVelocity =
+      drivebase.driveFieldOriented(driveAngularVelocity);
 
-
-Command driveFieldOrientededDirectAngle = drivebase.driveFieldOriented(driveDirectAngle);
-
-Command driveFieldOrientededAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
-
-//aca se llama todo
+  /* ================= CONSTRUCTOR ================= */
   public RobotContainer() {
     configureBindings();
-    drivebase.setDefaultCommand(driveFieldOrientededAngularVelocity);
+    drivebase.setDefaultCommand(driveFieldOrientedAngularVelocity);
   }
 
+  /* ================= BINDINGS ================= */
   private void configureBindings() {
 
+    /* ----- CHASIS ----- */
 
-    //ajustes chasis
+    // Toggle field oriented
     m_driverController_chasis.start().onTrue(
-        new edu.wpi.first.wpilibj2.command.InstantCommand(() -> {
-            fieldRelative = !fieldRelative;
-            System.out.println("Cambiado a Field Oriented: " + fieldRelative);
+        new InstantCommand(() -> {
+          fieldRelative = !fieldRelative;
+          System.out.println("Field Relative: " + fieldRelative);
         })
     );
 
-    m_driverController_chasis.b().onTrue(//para cambiar tu norte 
-        new edu.wpi.first.wpilibj2.command.InstantCommand(() -> drivebase.zeroGyro())
+    // Reset gyro
+    m_driverController_chasis.b().onTrue(
+        new InstantCommand(drivebase::zeroGyro)
     );
-    
+
+    /* ----- MECANISMOS ----- */
+
+    m_driverController_mecanismos.a().whileTrue(new intake_shooter_command(m_IntakeShooter, ()-> 0, () -> true, () -> false));
+    m_driverController_mecanismos.b().whileTrue(new intake_shooter_command(m_IntakeShooter, ()-> 0, () -> false, () -> true));
+
+    m_driverController_mecanismos.x().whileTrue(new selector_command(m_Selector, () -> true, () -> false));
+    m_driverController_mecanismos.y().whileTrue(new selector_command(m_Selector, () -> false, () -> true));
+
+
+    m_driverController_mecanismos.leftTrigger().whileTrue(
+    new shoot(m_IntakeShooter, m_Selector, () -> m_driverController_mecanismos.getRightTriggerAxis(), () -> true));
+
+    m_driverController_mecanismos.rightTrigger().whileTrue(new entry(m_IntakeShooter, m_Selector, () -> true, () -> true));
   }
 
-  //mecanismos
-
-
-
+  /* ================= AUTONOMOUS ================= */
   public Command getAutonomousCommand() {
-    // Por ahora retornamos null o un comando vacío hasta que configures PathPlanner
-    return null; 
-    // return Autos.exampleAuto(drivebase); // Descomentar cuando tengas el auto listo
+    return null;
   }
 }

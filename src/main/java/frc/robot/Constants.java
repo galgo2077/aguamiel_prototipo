@@ -24,4 +24,14 @@ public final class Constants {
 
     public static final double DEADBAND = 0.05;
   }
+  public static class id{
+
+    public static final int  intake_shooter = 1;
+    public static final int  direction = 1;
+
+
+
+
+  }
+  
 }
