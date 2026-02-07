@@ -17,19 +17,22 @@ public class RobotContainer {
   // Puerto 0 suele ser el Driver
   private final CommandXboxController m_driverController_chasis = new CommandXboxController(0); 
 
+
+  private boolean fieldRelative = false;
+
 // how it moves
 SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
                   () -> m_driverController_chasis.getLeftY() * -1,
-                  () -> m_driverController_chasis.getLeftY() * -1)
+                  () -> m_driverController_chasis.getLeftX() * -1)
                   .withControllerRotationAxis(m_driverController_chasis:: getRightX)
                   .deadband(OperatorConstants.DEADBAND)
                   .scaleTranslation(0.8)
-                  .allianceRelativeControl(true);
+                  .allianceRelativeControl(false);
 
 //how it turns
 SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
                   .withControllerHeadingAxis(m_driverController_chasis::getRightX, m_driverController_chasis::getRightY)
-                  .headingWhile(true);
+                  .headingWhile(() -> fieldRelative);
 
 
 
@@ -44,8 +47,25 @@ Command driveFieldOrientededAngularVelocity = drivebase.driveFieldOriented(drive
   }
 
   private void configureBindings() {
+
+
+    //ajustes chasis
+    m_driverController_chasis.start().onTrue(
+        new edu.wpi.first.wpilibj2.command.InstantCommand(() -> {
+            fieldRelative = !fieldRelative;
+            System.out.println("Cambiado a Field Oriented: " + fieldRelative);
+        })
+    );
+
+    m_driverController_chasis.b().onTrue(//para cambiar tu norte 
+        new edu.wpi.first.wpilibj2.command.InstantCommand(() -> drivebase.zeroGyro())
+    );
     
   }
+
+  //mecanismos
+
+
 
   public Command getAutonomousCommand() {
     // Por ahora retornamos null o un comando vacío hasta que configures PathPlanner

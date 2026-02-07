@@ -71,7 +71,9 @@ public class swerve_subsystem extends SubsystemBase {
   return swerveDrive;
 }
 
-
+  public void zeroGyro() {
+    swerveDrive.zeroGyro();
+}
 
   public void stop() {// detiene el robot
     swerveDrive.driveFieldOriented(new ChassisSpeeds(0, 0, 0));//we cancel speeds
