@@ -39,6 +39,8 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {//cancels auto
       m_autonomousCommand.cancel();
     }
+        CommandScheduler.getInstance().run();
+
   }
   @Override
   public void teleopPeriodic() {

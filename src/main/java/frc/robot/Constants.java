@@ -18,7 +18,7 @@ public final class Constants {
 
   public static class constants{
 
-    public static final double MAXSPEED = Units.feetToMeters(4.5);
+    public static final double MAXSPEED = Units.feetToMeters(3);
   }
   public static class OperatorConstants{
 
@@ -27,7 +27,7 @@ public final class Constants {
   public static class id{
 
     public static final int  intake_shooter = 1;
-    public static final int  direction = 1;
+    public static final int  direction = 2;
 
 
 
