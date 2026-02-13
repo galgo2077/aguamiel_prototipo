@@ -26,8 +26,8 @@ public final class Constants {
   }
   public static class id{
 
-    public static final int  intake_shooter = 1;
-    public static final int  direction = 2;
+    public static final int  intake_shooter = 16;
+    public static final int  direction = 23;
 
 
 

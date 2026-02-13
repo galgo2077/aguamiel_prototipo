@@ -10,6 +10,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+
+import java.io.Console;
 import java.io.File;
 import java.util.function.Supplier;
 
@@ -118,6 +120,8 @@ public class swerve_subsystem extends SubsystemBase {
 
     // Publish chassis speeds
     chassisSpeedsPublisher.set(swerveDrive.getRobotVelocity());
+
+    System.out.println(swerveDrive.getStates().toString());
   }
 
 
