@@ -17,6 +17,10 @@ import edu.wpi.first.wpilibj.Filesystem;
 import swervelib.parser.SwerveParser;
 import swervelib.SwerveDrive;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 
 
 //swerve modules
@@ -31,6 +35,12 @@ public class swerve_subsystem extends SubsystemBase {
   File directory = new File(Filesystem.getDeployDirectory(),"swerve");
   SwerveDrive  swerveDrive;
 
+  // AdvantageScope publishers
+  private final StructArrayPublisher<SwerveModuleState> measuredStatesPublisher;
+  private final StructArrayPublisher<SwerveModuleState> desiredStatesPublisher;
+  private final StructPublisher<Pose2d> posePublisher;
+  private final StructPublisher<ChassisSpeeds> chassisSpeedsPublisher;
+
   
   public swerve_subsystem() {
     //use the max speed whit those two values
@@ -41,6 +51,25 @@ public class swerve_subsystem extends SubsystemBase {
 
       throw new RuntimeException(e);
     }
+
+    // Initialize AdvantageScope publishers
+    NetworkTableInstance inst = NetworkTableInstance.getDefault();
+
+    measuredStatesPublisher = inst
+      .getStructArrayTopic("Swerve/MeasuredStates", SwerveModuleState.struct)
+      .publish();
+
+    desiredStatesPublisher = inst
+      .getStructArrayTopic("Swerve/DesiredStates", SwerveModuleState.struct)
+      .publish();
+
+    posePublisher = inst
+      .getStructTopic("Swerve/RobotPose", Pose2d.struct)
+      .publish();
+
+    chassisSpeedsPublisher = inst
+      .getStructTopic("Swerve/ChassisSpeeds", ChassisSpeeds.struct)
+      .publish();
   }
 
   //you get the velocity
@@ -73,6 +102,23 @@ public class swerve_subsystem extends SubsystemBase {
 
   }
 
+  @Override
+  public void periodic() {
+    // Publish swerve data for AdvantageScope using struct format
+
+    // Publish measured module states
+    measuredStatesPublisher.set(swerveDrive.getStates());
+
+    // Publish desired module states
+    // Note: YAGSL stores these internally, we publish the same as measured for now
+    desiredStatesPublisher.set(swerveDrive.getStates());
+
+    // Publish robot pose
+    posePublisher.set(swerveDrive.getPose());
+
+    // Publish chassis speeds
+    chassisSpeedsPublisher.set(swerveDrive.getRobotVelocity());
+  }
 
 
 }
